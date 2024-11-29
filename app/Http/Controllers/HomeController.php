@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\Client;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -25,8 +25,9 @@ class HomeController extends Controller
     public function index()
     {
         $totalUsers = 0;
-        $totalUsers = count(User::all()) - 1;
+        $totalUsers = count(Client::all());
+        $clients = Client::all();
 
-        return view('home')->with('totalUsers', $totalUsers);
+        return view('home', compact('totalUsers', 'clients'));
     }
 }
