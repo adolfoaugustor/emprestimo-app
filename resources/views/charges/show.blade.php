@@ -43,12 +43,9 @@
                             <td>R$ {{ number_format($installment->penalty, 2) }}</td>
                             <td>
                                 @if(!$installment->payment_date)
-                                    <form action="{{ route('installments.pay', $installment->id) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="btn btn-success">{{ __('Pay') }}</button>
-                                    </form>
+                                    <a href="{{ route('installments.showPaymentForm', $installment->id) }}" class="btn btn-success">{{ __('Pagar') }}</a>
                                 @else
-                                    <span class="badge bg-success">{{ __('Paid') }}</span>
+                                    <span class="badge bg-primary">{{ __('Tá Pago') }}</span>
                                 @endif
                             </td>
                         </tr>

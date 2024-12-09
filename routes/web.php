@@ -33,4 +33,5 @@ Route::get('/charges/create/{client_id}', [ChargeController::class, 'create'])->
 Route::get('/charges/show/{client_id}', [ChargeController::class, 'show'])->name('charges.show');
 Route::post('/charges/store/{client_id}', [ChargeController::class, 'store'])->name('charges.store');
 
+Route::get('/installments/pay/{installment}', [InstallmentController::class, 'showPaymentForm'])->name('installments.showPaymentForm');
 Route::post('/installments/pay/{installment}', [InstallmentController::class, 'pay'])->name('installments.pay');
