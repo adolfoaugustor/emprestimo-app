@@ -27,4 +27,9 @@ class Client extends Model
         'status',
         'document',
     ];
+
+    public function charges()
+    {
+        return $this->hasMany(Charge::class);
+    }
 }

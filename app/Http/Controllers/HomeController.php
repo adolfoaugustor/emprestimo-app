@@ -26,7 +26,7 @@ class HomeController extends Controller
     {
         $totalUsers = 0;
         $totalUsers = count(Client::all());
-        $clients = Client::all();
+        $clients = Client::with('charges')->get();
 
         return view('home', compact('totalUsers', 'clients'));
     }

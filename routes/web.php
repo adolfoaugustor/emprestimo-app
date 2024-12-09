@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\ChargeController;
+use App\Http\Controllers\InstallmentController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
 
@@ -26,3 +28,9 @@ Route::get('/clients/create', [ClientController::class, 'create'])->name('client
 Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
 Route::get('/clients/{id}/edit', [ClientController::class, 'edit'])->name('clients.edit');
 Route::put('/clients/{id}', [ClientController::class, 'update'])->name('clients.update');
+
+Route::get('/charges/create/{client_id}', [ChargeController::class, 'create'])->name('charges.create');
+Route::get('/charges/show/{client_id}', [ChargeController::class, 'show'])->name('charges.show');
+Route::post('/charges/store/{client_id}', [ChargeController::class, 'store'])->name('charges.store');
+
+Route::post('/installments/pay/{installment}', [InstallmentController::class, 'pay'])->name('installments.pay');

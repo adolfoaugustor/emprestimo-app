@@ -7,9 +7,10 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-### Libs a ser adicionado
+### referências
 
-- **[Vehikl](https://vehikl.com/)**
+- **[Bootstrap](https://getbootstrap.com/docs/5.3/getting-started/introduction/)**
+- **[IconsBootstrap](https://icons.getbootstrap.com/)**
 
 ## Starter
 

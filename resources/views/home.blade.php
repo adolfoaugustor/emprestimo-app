@@ -86,7 +86,7 @@
                         <td>{{ $client->id }}</td>
                         <td>{{ $client->name }}</td>
                         <td>{{ $client->document }}</td>
-                        <td>{{ $client->address }}</td> <!-- Assuming 'district' is part of 'address' -->
+                        <td>{{ $client->address }}</td>
                         <td>
                             @if ($client->status == 1)
                                 <span class="badge bg-success">{{ __('Active') }}</span>
@@ -96,6 +96,11 @@
                         </td>
                         <td>
                             <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-primary btn-sm">{{ __('Edit') }}</a>
+                            @if($client->charges->isEmpty())
+                                <a href="{{ route('charges.create', ['client_id' => $client->id]) }}" class="btn btn-success btn-sm">{{ __('Criar Cobrança') }}</a>
+                            @else
+                                <a href="{{ route('charges.show', ['client_id' => $client->id]) }}" class="btn btn-success btn-sm">{{ __('Visualizar Cobrança') }}</a>
+                            @endif
                         </td>
                     </tr>
                 @endforeach

@@ -20,7 +20,7 @@
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-light bg-success shadow-sm">
             <div class="container">
-                <a class="navbar-brand fw-bolder text-white" href="{{ url('/') }}">
+                <a class="navbar-brand fw-bolder text-white" href="{{ Auth::check() ? url('/home') :url('/') }}">
                     {{ config('app.name', 'Laravel') }}
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
