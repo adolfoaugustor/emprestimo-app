@@ -10,7 +10,7 @@
                 <li><strong>{{ __('Valor Total:') }}</strong> R$ {{ number_format($charge->total_amount, 2) }}</li>
                 <li><strong>{{ __('Valor Pago:') }}</strong> R$ {{ number_format($charge->amount_paid, 2) }}</li>
                 <li><strong>{{ __('Data da Cobrança:') }}</strong> {{ Carbon\Carbon::parse($charge->start_date)->format('d/m/Y') }}</li>
-                <li><strong>{{ __('Data Final:') }}</strong> {{ $charge->end_date ? $charge->end_date->format('d/m/Y') : __('N/A') }}</li>
+                <li><strong>{{ __('Data Final:') }}</strong> {{ $charge->end_date ? Carbon\Carbon::parse($charge->start_date)->format('d/m/Y') : __('N/A') }}</li>
                 <li><strong>{{ __('Parcelas Pagas:') }}</strong> {{ $charge->installments_paid }} / {{ $charge->installments_count }}</li>
                 <li><strong>{{ __('Status:') }}</strong> {{ $charge->installments_paid == $charge->installments_count ? __('Finalizado') : __('Pendente') }}</li>
             </ul>
