@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Charge;
 use App\Models\Client;
 use App\Models\Installment;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ChargeController extends Controller
@@ -48,20 +49,34 @@ class ChargeController extends Controller
     private function generateInstallments(Charge $charge)
     {
         $installmentAmount = $charge->total_amount / $charge->installments_count;
-        $startDate = \Carbon\Carbon::parse($charge->start_date);
-
+        $startDate = Carbon::parse($charge->start_date);
+    
+        // Ajustar a data inicial para o próximo dia útil, se necessário
+        switch ($startDate->dayOfWeek) {
+            case Carbon::SATURDAY:
+                $startDate->addDays(2); // Pular para segunda-feira
+                break;
+            case Carbon::SUNDAY:
+                $startDate->addDay(); // Pular para segunda-feira
+                break;
+            case Carbon::FRIDAY:
+                $startDate->addDays(3); // Pular para segunda-feira
+                break;
+            // Nenhum ajuste necessário para outros dias da semana
+        }
+    
         for ($i = 0; $i < $charge->installments_count; $i++) {
-            // Increment the date by 1 day, skipping weekends
-            do {
-                $startDate->addDay();
-            } while ($startDate->isWeekend());
-
-            // Create the installment with the calculated due date
+            // Criar a parcela com a data de vencimento calculada
             Installment::create([
                 'charge_id' => $charge->id,
                 'amount' => $installmentAmount,
                 'due_date' => $startDate->copy(),
             ]);
+    
+            // Incrementar a data por 1 dia, pulando fins de semana
+            do {
+                $startDate->addDay();
+            } while ($startDate->isWeekend());
         }
     }
 }

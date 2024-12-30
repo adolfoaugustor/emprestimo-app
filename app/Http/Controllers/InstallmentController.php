@@ -45,4 +45,17 @@ class InstallmentController extends Controller
 
         return redirect()->route('charges.show', ['client_id' => $installment->charge->client_id])->with('error', 'Parcela já foi paga!');
     }
+
+    public function updateDueDate(Request $request, $installment_id)
+    {
+        $request->validate([
+            'due_date' => 'required|date',
+        ]);
+
+        $installment = Installment::findOrFail($installment_id);
+        $installment->due_date = $request->input('due_date');
+        $installment->save();
+
+        return redirect()->back()->with('success', __('Data da parcela atualizada!'));
+    }
 }

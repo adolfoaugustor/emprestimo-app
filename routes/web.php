@@ -35,3 +35,4 @@ Route::post('/charges/store/{client_id}', [ChargeController::class, 'store'])->n
 
 Route::get('/installments/pay/{installment}', [InstallmentController::class, 'showPaymentForm'])->name('installments.showPaymentForm');
 Route::post('/installments/pay/{installment}', [InstallmentController::class, 'pay'])->name('installments.pay');
+Route::patch('/installments/{installment}/update-due-date', [InstallmentController::class, 'updateDueDate'])->name('installments.updateDueDate');
