@@ -38,7 +38,7 @@
                 <div class="mb-3 row">
                     <div class="col-4">
                         <label for="email" class="form-label">{{ __('E-mail')}}</label>
-                        <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $client->email) }}" required>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $client->email) }}">
                     </div>
                     <div class="col-4">
                         <label for="phone1" class="form-label">{{ __('Telefone principal')}}</label>

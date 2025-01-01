@@ -18,7 +18,7 @@ class ClientController extends Controller
         // Validação dos dados
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:clients,email',
+            'email' => 'nullable|string|max:255', // Agora opcional
             'description' => 'nullable|string',
             'address' => 'nullable|string',
             'phone1' => 'nullable|string|max:15',
@@ -48,7 +48,7 @@ class ClientController extends Controller
         // Validação dos dados
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:clients,email,'.$id,
+            'email' => 'nullable|string|max:255,',
             'description' => 'nullable|string',
             'address' => 'nullable|string',
             'phone1' => 'nullable|string|max:15',
@@ -62,10 +62,22 @@ class ClientController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Atualização do cliente
         $client = Client::findOrFail($id);
         $client->update($request->all());
 
         return redirect()->route('home')->with('success', 'Cliente atualizado com sucesso!');
+    }
+
+    public function destroy($id)
+    {
+        $client = Client::with('charges')->findOrFail($id);
+
+        if ($client->charges->count() > 0) {
+            return redirect()->route('home')
+                ->with('error', __('Cliente não pode ser excluído pois possui cobranças vinculadas.'));
+        }
+
+        $client->delete();
+        return redirect()->route('home')->with('success', __('Cliente excluído com sucesso!'));
     }
 }
