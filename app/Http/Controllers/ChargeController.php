@@ -51,8 +51,12 @@ class ChargeController extends Controller
 
     private function generateInstallments(Charge $charge)
     {
-        $installmentAmount = $charge->total_amount / $charge->installments_count;
-        $startDate = Carbon::parse($charge->start_date);
+        // Calcular o valor total com 20% de incremento
+        $originalAmount = $charge['total_amount'];
+        $incrementedAmount = $originalAmount * 1.20; // Incrementa 20%
+
+        $installmentAmount = $incrementedAmount / $charge->installments_count;
+        $startDate = Carbon::parse($charge->start_date)->addDay();
     
         // Ajustar a data inicial para o próximo dia útil, se necessário
         switch ($startDate->dayOfWeek) {
@@ -82,4 +86,6 @@ class ChargeController extends Controller
             } while ($startDate->isWeekend());
         }
     }
+
+
 }

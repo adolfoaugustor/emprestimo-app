@@ -23,17 +23,20 @@
         @csrf
         <div class="mb-3">
             <label for="total_amount" class="form-label">{{ __('Total da cobrança') }}</label>
-            <input type="number" step="0.01" class="form-control" id="total_amount" name="total_amount" value="{{ old('total_amount') }}" required>
+            <input type="number" step="0.01" class="form-control" id="total_amount" name="total_amount" value="{{ old('total_amount') }}" required
+            placeholder="R$ 0,00">
         </div>
 
         <div class="mb-3">
             <label for="start_date" class="form-label">{{ __('Data de Cadastro') }}</label>
-            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ old('start_date') }}" required>
+            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ old('start_date') }}" required
+            placeholder="dd/mm/aaaa">
         </div>
 
         <div class="mb-3">
             <label for="installments_count" class="form-label">{{ __('Número de parcelas') }}</label>
-            <input type="number" class="form-control" id="installments_count" name="installments_count" value="{{ old('installments_count') }}" required>
+            <input type="number" class="form-control" name="installments" value="20" disabled>
+            <input type="hidden" name="installments_count" value="20">
         </div>
 
         <button type="submit" class="btn btn-primary">{{ __('Cadastrar Cobrança') }}</button>

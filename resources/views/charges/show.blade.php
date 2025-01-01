@@ -7,12 +7,12 @@
         <div class="mb-3">
             <h4>{{ __('Informações de cobrança') }}</h4>
             <ul>
-                <li><strong>{{ __('Valor Total:') }}</strong> R$ {{ number_format($charge->total_amount, 2) }}</li>
-                <li><strong>{{ __('Valor Pago:') }}</strong> R$ {{ number_format($charge->amount_paid, 2) }}</li>
-                <li><strong>{{ __('Data da Cobrança:') }}</strong> {{ Carbon\Carbon::parse($charge->start_date)->format('d/m/Y') }}</li>
-                <li><strong>{{ __('Data Final:') }}</strong> {{ $charge->end_date ? Carbon\Carbon::parse($charge->start_date)->format('d/m/Y') : __('N/A') }}</li>
-                <li><strong>{{ __('Parcelas Pagas:') }}</strong> {{ $charge->installments_paid }} / {{ $charge->installments_count }}</li>
-                <li><strong>{{ __('Status:') }}</strong> {{ $charge->installments_paid == $charge->installments_count ? __('Finalizado') : __('Pendente') }}</li>
+                <strong>{{ __('Valor Total:') }}</strong> R$ {{ number_format($charge->total_amount, 2) }} <small>({{ __('Valor Emprestado!') }})</small><br>
+                <strong>{{ __('Valor Pago:') }}</strong> R$ {{ number_format($charge->amount_paid, 2) }} <small>({{ __('valor total está adicionado 20%') }})</small><br>
+                <strong>{{ __('Data da Cobrança:') }}</strong> {{ Carbon\Carbon::parse($charge->start_date)->format('d/m/Y') }}<br>
+                <strong>{{ __('Data Final:') }}</strong> {{ $charge->end_date ? Carbon\Carbon::parse($charge->start_date)->format('d/m/Y') : __('N/A') }}<br>
+                <strong>{{ __('Parcelas Pagas:') }}</strong> {{ $charge->installments_paid }} / {{ $charge->installments_count }}<br>
+                <strong>{{ __('Status:') }}</strong> {{ $charge->installments_paid == $charge->installments_count ? __('Finalizado') : __('Pendente') }}<br>
             </ul>
         </div>
 
