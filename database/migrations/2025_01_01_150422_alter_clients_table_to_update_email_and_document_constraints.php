@@ -19,8 +19,6 @@ return new class extends Migration
             } catch (\Exception $e) {
                 // Log ou ignore o erro se o índice não existir
             }
-
-            $table->unique('document');
         });
     }
 
@@ -28,7 +26,6 @@ return new class extends Migration
     {
         Schema::table('clients', function (Blueprint $table) {
             $table->string('email')->nullable(false)->unique()->change();
-            $table->dropUnique(['document']);
         });
     }
 };
