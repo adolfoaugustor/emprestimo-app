@@ -21,7 +21,7 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th>{{ __('ID') }}</th>
+                        <th>{{ __('Nº') }}</th>
                         <th>{{ __('Quantia') }}</th>
                         <th>{{ __('Data de Vencimento') }}</th>
                         <th>{{ __('Data de Pagamento') }}</th>
@@ -31,14 +31,16 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @php $i = 1; @endphp
                     @foreach($charge->installments as $installment)
                         <tr>
-                            <td>{{ $installment->id }}</td>
+                            <td>{{ $i++ }}</td>
                             <td>R$ {{ number_format($installment->amount, 2) }}</td>
                             <td>{{ Carbon\Carbon::parse($installment->due_date)->format('d/m/Y') }}</td>
                             <td>{{ $installment->payment_date ? 
                                 Carbon\Carbon::parse($installment->payment_date)->format('d/m/Y') :
-                                __('Not Paid') }}</td>
+                                __('Not Paid') }}
+                            </td>
                             <td>R$ {{ number_format($installment->discount, 2) }}</td>
                             <td>R$ {{ number_format($installment->penalty, 2) }}</td>
                             <td>

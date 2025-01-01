@@ -18,8 +18,11 @@ class ChargeController extends Controller
 
     public function show($client_id)
     {
-        $client = Client::with(['charges', 'charges.installments'])->findOrFail($client_id);
-        $charge = $client->charges->first(); // Assumindo que estamos mostrando a primeira cobrança
+        $client = Client::with(['charges', 'charges.installments' => function ($query) {
+            $query->orderBy('due_date', 'asc');
+        }])->findOrFail($client_id);
+
+        $charge = $client->charges->first();
 
         return view('charges.show', compact('client', 'charge'));
     }
