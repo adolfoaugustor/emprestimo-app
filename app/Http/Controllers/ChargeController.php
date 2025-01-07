@@ -18,11 +18,29 @@ class ChargeController extends Controller
 
     public function show($client_id)
     {
-        $client = Client::with(['charges', 'charges.installments' => function ($query) {
-            $query->orderBy('due_date', 'asc');
-        }])->findOrFail($client_id);
+        $client = Client::with([
+            'charges' => function ($query) {
+                $query->orderBy('created_at', 'desc'); // Ordena as cobranças pela data de criação, mais recente primeiro
+            },
+            'charges.installments' => function ($query) {
+                $query->orderBy('due_date', 'asc');
+            }
+        ])->findOrFail($client_id);
 
-        $charge = $client->charges->first();
+        // Tenta obter a cobrança ativa (sem data de término)
+        $charge = $client->charges->firstWhere('end_date', null);
+
+        // Se não houver cobrança ativa, pega a última criada
+        if (!$charge) {
+            $charge = $client->charges->first();
+        }
+
+        // Carrega as parcelas da cobrança selecionada, se existir
+        if ($charge) {
+            $charge->load(['installments' => function ($query) {
+                $query->orderBy('due_date', 'asc');
+            }]);
+        }
 
         return view('charges.show', compact('client', 'charge'));
     }
