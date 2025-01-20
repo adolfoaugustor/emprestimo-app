@@ -43,4 +43,12 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /**
+     * Os clientes associados ao usuário.
+     */
+    public function clients()
+    {
+        return $this->belongsToMany(Client::class)->withTimestamps();
+    }
 }
