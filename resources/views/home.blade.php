@@ -16,6 +16,12 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
+            @if (session('error'))
+                <div class="alert alert-danger d-flex align-items-center alert-dismissible fade show mt-3" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
         </div>
         <div class="row">
             <div class="col-sm-12 col-lg-3 col-md-3">
@@ -71,17 +77,17 @@
         </div>
 
         <div class="row justify-content-center">
-            <h2 class="mt-5 text-center">{{ __('Lista de Clientes') }}</h2>
+            <h2 class="mt-5 mb-5 text-center">{{ __('Lista de Clientes') }}</h2>
 
             <table class="table table-hover table-striped">
                 <thead>
                     <tr>
                         <th>{{ __('ID') }}</th>
-                        <th>{{ __('Name') }}</th>
-                        <th>{{ __('Document') }}</th>
-                        <th>{{ __('District') }}</th>
+                        <th>{{ __('Cliente') }}</th>
+                        <th>{{ __('Documento') }}</th>
+                        <th>{{ __('Endereço') }}</th>
                         <th>{{ __('Status') }}</th>
-                        <th>{{ __('Actions') }}</th>
+                        <th>{{ __('Ações') }}</th>
                     </tr>
                 </thead>
                 <tbody>

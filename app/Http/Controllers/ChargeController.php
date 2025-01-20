@@ -33,6 +33,9 @@ class ChargeController extends Controller
         // Se não houver cobrança ativa, pega a última criada
         if (!$charge) {
             $charge = $client->charges->first();
+            if (!$charge) {
+                return redirect()->route('home')->with('error', 'Nenhuma cobrança encontrada para este cliente.');
+            }
         }
 
         // Carrega as parcelas da cobrança selecionada, se existir
