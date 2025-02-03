@@ -36,7 +36,7 @@
                         <br>
                         QTD de Clientes: {{ $totalClients }}
                     </div>
-                </div>            
+                </div>
             </div>
             <div class="col-sm-12 col-lg-3 col-md-3">
                 <div class="card">
@@ -47,7 +47,7 @@
                         <br>
                         Total de Emprestado: R$ {{ $charger }}
                     </div>
-                </div>            
+                </div>
             </div>
             <div class="col-sm-12 col-lg-3 col-md-3">
                 <div class="card">
@@ -61,7 +61,7 @@
                         <br>
                         A Receber: R$ {{ number_format($totalReceivable, 2) }}
                     </div>
-                </div>            
+                </div>
             </div>
             <div class="col-sm-12 col-lg-3 col-md-3">
                 <div class="card">
@@ -72,10 +72,17 @@
                         <br>
                         Pagos: R$ {{ number_format($totalPaid, 2) }}
                     </div>
-                </div>            
+                </div>
             </div>
         </div>
-
+        <div class="row">
+            <div class="col-12 text-end mt-3">
+                <!-- Botão para abrir o modal -->
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#investmentModal">
+                    Investir
+                </button>
+            </div>
+        </div>
         <div class="row justify-content-center">
             <h2 class="mt-5 mb-5 text-center">{{ __('Lista de Clientes') }}</h2>
 
@@ -164,4 +171,35 @@
         </div>
     </div>
     @endforeach
+
+    <!-- Modal -->
+    <div class="modal fade" id="investmentModal" tabindex="-1" role="dialog" aria-labelledby="investmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="investmentModalLabel">Adicionar Investimento</h5>
+                    <button type="button" class="text-end close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="{{ route('add.investment') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="amount">Valor do Investimento</label>
+                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Descrição</label>
+                            <textarea class="form-control" id="description" name="description"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection

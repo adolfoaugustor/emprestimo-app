@@ -5,11 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\Charge;
 use App\Models\Client;
 use App\Models\Installment;
+use App\Services\FinancialTransactionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ChargeController extends Controller
 {
+    protected $financialTransactionService;
+
+    public function __construct(FinancialTransactionService $financialTransactionService)
+    {
+        $this->financialTransactionService = $financialTransactionService;
+    }
+
     public function create($client_id)
     {
         $client = Client::findOrFail($client_id);
@@ -62,6 +70,14 @@ class ChargeController extends Controller
             'total_amount' => $validated['total_amount'],
             'installments_count' => $validated['installments_count'],
         ]);
+        
+        // Registrar a transação financeira
+        $this->financialTransactionService->recordTransaction(
+            'charge',
+            $charge->total_amount,
+            'Cobrança #' . $charge->id,
+            $charge->id
+        );
 
         $this->generateInstallments($charge);
 

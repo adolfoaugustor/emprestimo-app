@@ -36,6 +36,9 @@
                             <a class="nav-link text-light {{ request()->routeIs('register') ? 'active': '' }}" aria-current="page" 
                             href="{{ route('clients.create') }}">{{ __('Add Cliente') }}</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light {{ request()->routeIs('financial.report') ? 'active': '' }}" href="{{ route('financial.report') }}">Relatório Financeiro</a>
+                        </li>
                     </ul>
 
                     <!-- Right Side Of Navbar -->
