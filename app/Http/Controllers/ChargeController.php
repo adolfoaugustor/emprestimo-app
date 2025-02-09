@@ -21,6 +21,11 @@ class ChargeController extends Controller
     public function create($client_id)
     {
         $client = Client::findOrFail($client_id);
+        
+        if ($this->hasActiveCharge($client_id)) {
+            return redirect()->route('home')->with('error', 'Este cliente já possui uma cobrança ativa.');
+        }
+
         return view('charges.create', compact('client'));
     }
 
@@ -124,5 +129,16 @@ class ChargeController extends Controller
         }
     }
 
-
+    public function hasActiveCharge(int $userId): bool
+    {
+        // check has charge active by id_user and end_date is null
+        $charge = Charge::where('client_id', $userId)
+                    ->where('end_date', null)
+                    ->first();
+        if ($charge) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
