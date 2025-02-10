@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Charge;
 use App\Models\Client;
 use App\Models\Installment;
+use App\Services\ChargeService;
 use App\Services\FinancialTransactionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -12,21 +13,24 @@ use Illuminate\Http\Request;
 class ChargeController extends Controller
 {
     protected $financialTransactionService;
+    protected $chargeService;
 
-    public function __construct(FinancialTransactionService $financialTransactionService)
+    public function __construct(FinancialTransactionService $financialTransactionService, ChargeService $chargeService)
     {
         $this->financialTransactionService = $financialTransactionService;
+        $this->chargeService = $chargeService;
     }
 
     public function create($client_id)
     {
         $client = Client::findOrFail($client_id);
-        
+
         if ($this->hasActiveCharge($client_id)) {
             return redirect()->route('home')->with('error', 'Este cliente já possui uma cobrança ativa.');
         }
-
-        return view('charges.create', compact('client'));
+        $zeroPayments = $this->chargeService->getZeroPaymentsFromLastCharge($client->id);
+        
+        return view('charges.create', compact('client', 'zeroPayments'));
     }
 
     public function show($client_id)

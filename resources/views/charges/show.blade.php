@@ -22,7 +22,8 @@
                 <thead>
                     <tr>
                         <th>{{ __('Nº') }}</th>
-                        <th>{{ __('Quantia') }}</th>
+                        <th>{{ __('Vlr Parcela') }}</th>
+                        <th>{{ __('Vlr Pago') }}</th>
                         <th>{{ __('Data de Vencimento') }}</th>
                         <th>{{ __('Data de Pagamento') }}</th>
                         <th>{{ __('Disconto') }}</th>
@@ -36,6 +37,9 @@
                         <tr>
                             <td>{{ $i++ }}</td>
                             <td>R$ {{ number_format($installment->amount, 2) }}</td>
+                            <td class="{{ $installment->payment_date && $installment->amount_paid == 0.00 ? 'text-danger' : '' }}">
+                                R$ {{ number_format($installment->amount_paid, 2) }}
+                            </td>                            
                             <td>{{ Carbon\Carbon::parse($installment->due_date)->format('d/m/Y') }}</td>
                             <td>{{ $installment->payment_date ? 
                                 Carbon\Carbon::parse($installment->payment_date)->format('d/m/Y') :

@@ -21,6 +21,31 @@
 
     <form action="{{ route('charges.store', ['client_id' => $client->id]) }}" method="POST">
         @csrf
+
+        @if (count($zeroPayments) >= 1)
+        <h3>Pagamentos Zerados da Última Cobrança</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Data do Pagamento</th>
+                    <th>Valor Original</th>
+                    <th>Incluir na Nova Cobrança</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($zeroPayments as $payment)
+                <tr>
+                    <td>{{ \Carbon\Carbon::parse($payment['payment_date'])->format('d/m/Y') }}</td>
+                    <td>R$ {{ number_format($payment['amount'], 2, ',', '.') }}</td>
+                    <td>
+                        <input type="checkbox" name="include_payments[]" value="{{ $payment['id'] }}">
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+        @endif
+        
         <div class="mb-3">
             <label for="total_amount" class="form-label">{{ __('Total da cobrança') }}</label>
             <input type="number" step="0.01" class="form-control" id="total_amount" name="total_amount" value="{{ old('total_amount') }}" required
