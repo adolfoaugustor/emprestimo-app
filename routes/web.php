@@ -4,6 +4,7 @@ use App\Http\Controllers\ChargeController;
 use App\Http\Controllers\InstallmentController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\FinancialReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +24,7 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::post('/add-investment', [App\Http\Controllers\HomeController::class, 'addInvestment'])->name('add.investment');
 
 Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
 Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
@@ -37,3 +39,5 @@ Route::post('/charges/store/{client_id}', [ChargeController::class, 'store'])->n
 Route::get('/installments/pay/{installment}', [InstallmentController::class, 'showPaymentForm'])->name('installments.showPaymentForm');
 Route::post('/installments/pay/{installment}', [InstallmentController::class, 'pay'])->name('installments.pay');
 Route::patch('/installments/{installment}/update-due-date', [InstallmentController::class, 'updateDueDate'])->name('installments.updateDueDate');
+
+Route::get('/financial-report', [FinancialReportController::class, 'index'])->name('financial.report');

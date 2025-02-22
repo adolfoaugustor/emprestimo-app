@@ -27,11 +27,12 @@ class InstallmentController extends Controller
             $installment->payment_date = now();
             $installment->discount = $validated['discount'] ?? 0;
             $installment->penalty = $validated['penalty'] ?? 0;
+            $installment->amount_paid = $validated['amount'] - $validated['discount'] + $validated['penalty']; 
             $installment->save();
 
             // Atualize o valor pago na cobrança
             $charge = $installment->charge;
-            $charge->amount_paid += $validated['amount'] - $installment->discount + $installment->penalty;
+            $charge->amount_paid += $validated['amount'] - $validated['discount'] + $validated['penalty'];
             $charge->installments_paid += 1;
 
             // Verifique se todas as parcelas foram pagas

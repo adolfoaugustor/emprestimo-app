@@ -5,15 +5,32 @@ namespace App\Http\Controllers;
 use App\Models\Charge;
 use App\Models\Client;
 use App\Models\Installment;
+use App\Services\ChargeService;
+use App\Services\FinancialTransactionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ChargeController extends Controller
 {
+    protected $financialTransactionService;
+    protected $chargeService;
+
+    public function __construct(FinancialTransactionService $financialTransactionService, ChargeService $chargeService)
+    {
+        $this->financialTransactionService = $financialTransactionService;
+        $this->chargeService = $chargeService;
+    }
+
     public function create($client_id)
     {
         $client = Client::findOrFail($client_id);
-        return view('charges.create', compact('client'));
+
+        if ($this->hasActiveCharge($client_id)) {
+            return redirect()->route('home')->with('error', 'Este cliente já possui uma cobrança ativa.');
+        }
+        $zeroPayments = $this->chargeService->getZeroPaymentsFromLastCharge($client->id);
+        
+        return view('charges.create', compact('client', 'zeroPayments'));
     }
 
     public function show($client_id)
@@ -68,6 +85,14 @@ class ChargeController extends Controller
             'total_amount' => $validated['total_amount'],
             'installments_count' => $validated['installments_count'],
         ]);
+        
+        // Registrar a transação financeira
+        $this->financialTransactionService->recordTransaction(
+            'charge',
+            $charge->total_amount,
+            'Cobrança #' . $charge->id,
+            $charge->id
+        );
 
         $this->generateInstallments($charge);
 
@@ -114,5 +139,16 @@ class ChargeController extends Controller
         }
     }
 
-
+    public function hasActiveCharge(int $userId): bool
+    {
+        // check has charge active by id_user and end_date is null
+        $charge = Charge::where('client_id', $userId)
+                    ->where('end_date', null)
+                    ->first();
+        if ($charge) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

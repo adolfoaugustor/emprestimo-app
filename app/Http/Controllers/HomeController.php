@@ -7,17 +7,21 @@ use App\Models\Client;
 use App\Models\Installment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Services\FinancialTransactionService;
 
 class HomeController extends Controller
 {
+    protected $financialTransactionService;
+
     /**
      * Create a new controller instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(FinancialTransactionService $financialTransactionService)
     {
         $this->middleware('auth');
+        $this->financialTransactionService = $financialTransactionService;
     }
 
     /**
@@ -53,5 +57,21 @@ class HomeController extends Controller
         $totalClients = $clients->count();
 
         return view('home', compact('clients', 'totalClients', 'totalPaid', 'totalReceivable', 'charger'));
+    }
+
+    public function addInvestment(Request $request)
+    {
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0',
+            'description' => 'nullable|string|max:255',
+        ]);
+
+        $this->financialTransactionService->recordTransaction(
+            'investment',
+            $validated['amount'],
+            $validated['description']
+        );
+
+        return redirect()->route('home')->with('success', 'Investimento adicionado com sucesso!');
     }
 }

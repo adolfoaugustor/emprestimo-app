@@ -16,6 +16,12 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <!-- Scripts -->
+    <style>
+        .nav-link.active {
+            font-weight: bold;  /* Deixa o texto em negrito */
+            border-bottom: 2px solid #fff; /* Adiciona um sublinhado */
+        }
+    </style>
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
 <body>
@@ -33,8 +39,11 @@
                     <!-- Left Side Of Navbar -->
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link text-light {{ request()->routeIs('register') ? 'active': '' }}" aria-current="page" 
+                            <a class="nav-link text-light {{ request()->routeIs('clients.create') ? 'active': '' }}"
                             href="{{ route('clients.create') }}">{{ __('Add Cliente') }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light {{ request()->routeIs('financial.report') ? 'active': '' }}" href="{{ route('financial.report') }}">Relatórios</a>
                         </li>
                     </ul>
 
