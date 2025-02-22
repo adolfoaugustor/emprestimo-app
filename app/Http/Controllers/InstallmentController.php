@@ -3,10 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Installment;
+use App\Services\FinancialTransactionService;
 use Illuminate\Http\Request;
 
 class InstallmentController extends Controller
 {
+    protected $financialTransactionService;
+
+    public function __construct(FinancialTransactionService $financialTransactionService)
+    {
+        $this->financialTransactionService = $financialTransactionService;
+    }
     public function showPaymentForm($installment_id)
     {
         $installment = Installment::findOrFail($installment_id);
@@ -40,6 +47,14 @@ class InstallmentController extends Controller
                 $charge->end_date = now();
             }
 
+            // Registrar a transação financeira
+            $this->financialTransactionService->recordTransaction(
+                'payment',
+                $installment->amount_paid,
+                'Pagamento recebido ID' . $installment->id,
+                $installment->id
+            );
+            
             $charge->save();
             return redirect()->route('charges.show', ['client_id' => $charge->client_id])->with('success', 'Parcela paga!');
         }

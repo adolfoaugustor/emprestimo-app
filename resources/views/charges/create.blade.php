@@ -38,7 +38,7 @@
                     <td>{{ \Carbon\Carbon::parse($payment['payment_date'])->format('d/m/Y') }}</td>
                     <td>R$ {{ number_format($payment['amount'], 2, ',', '.') }}</td>
                     <td>
-                        <input type="checkbox" name="include_payments[]" value="{{ $payment['id'] }}">
+                        <input type="checkbox" name="include_payments[]" checked=true value="{{ $payment['id'] }}">
                     </td>
                 </tr>
                 @endforeach

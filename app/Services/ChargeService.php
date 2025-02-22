@@ -17,7 +17,7 @@ class ChargeService
         }
 
         return $lastCharge->installments()
-            ->where('amount', 0.00)
+            ->where('amount_paid', 0.00)
             ->whereNotNull('payment_date')
             ->get()
             ->toArray();

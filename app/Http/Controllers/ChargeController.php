@@ -73,19 +73,25 @@ class ChargeController extends Controller
     
     public function store(Request $request, $client_id)
     {
+        $includedPaymentsIds = $request->input('include_payments', []);
+        $additionalAmount = $request->input('total_amount', 0);
+
         $validated = $request->validate([
             'start_date' => 'required|date',
             'total_amount' => 'required|numeric|min:0',
             'installments_count' => 'required|integer|min:1',
         ]);
 
+        $includedPaymentsTotal = Installment::whereIn('id', $includedPaymentsIds)->sum('amount');
+        $newTotalAmount = $includedPaymentsTotal + $additionalAmount;
+
         $charge = Charge::create([
             'client_id' => $client_id,
             'start_date' => $validated['start_date'],
-            'total_amount' => $validated['total_amount'],
+            'total_amount' => $newTotalAmount,
             'installments_count' => $validated['installments_count'],
         ]);
-        
+
         // Registrar a transação financeira
         $this->financialTransactionService->recordTransaction(
             'charge',
