@@ -32,4 +32,12 @@ class Client extends Model
     {
         return $this->hasMany(Charge::class);
     }
+
+    /**
+     * Os usuários associados ao cliente.
+     */
+    public function users()
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
 }

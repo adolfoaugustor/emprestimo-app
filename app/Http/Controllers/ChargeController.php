@@ -18,6 +18,7 @@ class ChargeController extends Controller
 
     public function show($client_id)
     {
+        
         $client = Client::with([
             'charges' => function ($query) {
                 $query->orderBy('created_at', 'desc'); // Ordena as cobranças pela data de criação, mais recente primeiro
@@ -26,7 +27,12 @@ class ChargeController extends Controller
                 $query->orderBy('due_date', 'asc');
             }
         ])->findOrFail($client_id);
-
+        
+        // add redirect to home with message client not charge
+        if ($client->charges->isEmpty()) {
+            return redirect()->route('home')->with('error', 'Cliente não possui cobranças.');
+        }
+            
         // Tenta obter a cobrança ativa (sem data de término)
         $charge = $client->charges->firstWhere('end_date', null);
 

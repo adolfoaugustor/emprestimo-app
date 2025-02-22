@@ -27,18 +27,30 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $charger = $totalPaid = $totalReceivable = $totalClients = 0;
+        $user = auth()->user();
         $currentMonthStart = Carbon::now()->startOfMonth();
         $currentMonthEnd = Carbon::now()->endOfMonth();
 
-        $totalPaid = Installment::whereNotNull('payment_date')
-                    ->sum('amount');
-        $totalReceivable = Installment::whereNull('payment_date')
-                        ->whereBetween('due_date', [$currentMonthStart, $currentMonthEnd])
-                        ->sum('amount');
-        $charger = Charge::all()->sum('total_amount');
-        $clients = Client::with('charges')->get();
-        $totalClients = count(Client::with('charges')->get());
+        // Obter os IDs dos clientes associados ao usuário atual
+        $clientIds = $user->clients()->pluck('clients.id');
+
+        $totalPaid = Installment::whereHas('charge', function ($query) use ($clientIds) {
+            $query->whereIn('client_id', $clientIds);
+        })
+        ->whereNotNull('payment_date')
+        ->sum('amount');
+
+        $totalReceivable = Installment::whereHas('charge', function ($query) use ($clientIds) {
+            $query->whereIn('client_id', $clientIds);
+        })
+        ->whereNull('payment_date')
+        ->whereBetween('due_date', [$currentMonthStart, $currentMonthEnd])
+        ->sum('amount');
+
+        $charger = Charge::whereIn('client_id', $clientIds)->sum('total_amount');
+
+        $clients = $user->clients()->with('charges')->get();
+        $totalClients = $clients->count();
 
         return view('home', compact('clients', 'totalClients', 'totalPaid', 'totalReceivable', 'charger'));
     }
