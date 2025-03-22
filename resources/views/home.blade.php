@@ -102,7 +102,7 @@
                         <tr>
                             <td>{{ $client->id }}</td>
                             <td>{{ $client->name }}</td>
-                            <td>{{ $client->document }}</td>
+                            <td>{{ maskMiddleCharacters($client->document) }}</td>
                             <td>{{ $client->address }}</td>
                             <td>
                                 @if ($client->status == 1)

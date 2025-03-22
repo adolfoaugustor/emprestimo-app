@@ -22,11 +22,11 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin_cobranca_app
+    container_name: phpmyadmin
     environment:
       PMA_HOST: mysql
-      PMA_USER: usuario_cobranca_app
-      PMA_PASSWORD: neguim2024
+      PMA_USER: root
+      PMA_PASSWORD: 123123
       PMA_ARBITRARY: 1
     ports:
       - "8080:80"
