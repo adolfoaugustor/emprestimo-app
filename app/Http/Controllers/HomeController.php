@@ -55,8 +55,16 @@ class HomeController extends Controller
 
         $clients = $user->clients()->with('charges')->get();
         $totalClients = $clients->count();
+        $pendingInstallments = Installment::with('charge.client')
+            ->whereHas('charge', function ($query) use ($clientIds) {
+                $query->whereIn('client_id', $clientIds);
+            })
+            ->whereNull('payment_date')
+            ->orderBy('due_date')
+            ->limit(10)
+            ->get();
 
-        return view('home', compact('clients', 'totalClients', 'totalPaid', 'totalReceivable', 'charger'));
+        return view('home', compact('clients', 'totalClients', 'totalPaid', 'totalReceivable', 'charger', 'pendingInstallments'));
     }
 
     public function addInvestment(Request $request)

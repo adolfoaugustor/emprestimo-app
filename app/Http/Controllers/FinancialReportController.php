@@ -3,14 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\FinancialTransaction;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class FinancialReportController extends Controller
 {
     public function index(Request $request)
     {
-        $startDate = $request->input('start_date', now()->startOfMonth());
-        $endDate = $request->input('end_date', now()->endOfMonth());
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
+
+        $startDate = Carbon::parse($validated['start_date'] ?? now()->startOfMonth());
+        $endDate = Carbon::parse($validated['end_date'] ?? now()->endOfMonth())->endOfDay();
 
         $transactions = FinancialTransaction::whereBetween('transaction_date', [$startDate, $endDate])
             ->orderBy('transaction_date')

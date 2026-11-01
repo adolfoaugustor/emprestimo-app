@@ -83,6 +83,43 @@
                 </button>
             </div>
         </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <h2 class="mb-3 text-center">{{ __('Próximos vencimentos e pagamentos pendentes') }}</h2>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>{{ __('Cliente') }}</th>
+                                <th>{{ __('Vencimento') }}</th>
+                                <th>{{ __('Valor') }}</th>
+                                <th>{{ __('Situação') }}</th>
+                                <th>{{ __('Ação') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($pendingInstallments as $installment)
+                                <tr>
+                                    <td>{{ $installment->charge->client->name }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($installment->due_date)->format('d/m/Y') }}</td>
+                                    <td>R$ {{ number_format($installment->amount, 2, ',', '.') }}</td>
+                                    <td>
+                                        @if(\Carbon\Carbon::parse($installment->due_date)->lt(today()))
+                                            <span class="badge bg-danger">{{ __('Atrasado') }}</span>
+                                        @else
+                                            <span class="badge bg-warning text-dark">{{ __('Pendente') }}</span>
+                                        @endif
+                                    </td>
+                                    <td><a class="btn btn-success btn-sm" href="{{ route('installments.showPaymentForm', $installment->id) }}">{{ __('Registrar pagamento') }}</a></td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="5" class="text-center">{{ __('Não há pagamentos pendentes.') }}</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
         <div class="row justify-content-center">
             <h2 class="mt-5 mb-5 text-center">{{ __('Lista de Clientes') }}</h2>
 
