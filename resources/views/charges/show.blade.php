@@ -35,10 +35,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php $i = 1; @endphp
                     @foreach($charge->installments as $installment)
                         <tr>
-                            <td>{{ $i++ }}</td>
+                            <td>{{ $loop->iteration }}</td>
                             <td>R$ {{ number_format($installment->amount, 2, ',', '.') }}</td>
                             <td class="{{ $installment->payment_date && $installment->amount_paid == 0.00 ? 'text-danger' : '' }}">
                                 R$ {{ number_format($installment->amount_paid, 2, ',', '.') }}
