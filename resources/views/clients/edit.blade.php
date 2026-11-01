@@ -84,6 +84,21 @@
                 <button type="submit" class="btn btn-primary">Atualizar</button>
             </form>
         </div>
+        @if($client->accountTransfers->isNotEmpty())
+        <div class="card mt-4">
+            <div class="card-header">Histórico de transferência de carteira</div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>De</th><th>Para</th><th>Responsável</th><th>Data</th></tr></thead>
+                    <tbody>
+                        @foreach($client->accountTransfers as $transfer)
+                            <tr><td>{{ $transfer->fromAccountOwner?->name ?? '—' }}</td><td>{{ $transfer->toAccountOwner?->name ?? '—' }}</td><td>{{ $transfer->transferredBy?->name ?? '—' }}</td><td>{{ $transfer->created_at->format('d/m/Y H:i') }}</td></tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 

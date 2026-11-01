@@ -42,6 +42,8 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'is_active' => 'boolean',
+        'must_change_password' => 'boolean',
     ];
 
     /**
@@ -50,5 +52,30 @@ class User extends Authenticatable
     public function clients()
     {
         return $this->belongsToMany(Client::class)->withTimestamps();
+    }
+
+    public function accountOwner()
+    {
+        return $this->belongsTo(self::class, 'account_owner_id');
+    }
+
+    public function subusers()
+    {
+        return $this->hasMany(self::class, 'account_owner_id');
+    }
+
+    public function subuserPermissions()
+    {
+        return $this->hasOne(SubuserPermission::class);
+    }
+
+    public function isAccountOwner(): bool
+    {
+        return $this->account_owner_id === null;
+    }
+
+    public function accountOwnerId(): int
+    {
+        return $this->account_owner_id ?? $this->id;
     }
 }

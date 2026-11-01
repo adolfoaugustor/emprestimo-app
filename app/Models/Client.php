@@ -26,6 +26,8 @@ class Client extends Model
         'birth_date',
         'status',
         'document',
+        'account_owner_id',
+        'created_by_user_id',
     ];
 
     public function charges()
@@ -39,5 +41,20 @@ class Client extends Model
     public function users()
     {
         return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
+    public function accountOwner()
+    {
+        return $this->belongsTo(User::class, 'account_owner_id');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    public function accountTransfers()
+    {
+        return $this->hasMany(ClientAccountTransfer::class)->with(['fromAccountOwner', 'toAccountOwner', 'transferredBy'])->orderByDesc('created_at');
     }
 }

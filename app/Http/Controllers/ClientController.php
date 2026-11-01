@@ -3,18 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
-use DB;
+use App\Models\ClientAccountTransfer;
+use App\Models\User;
+use App\Services\AccountContext;
+use App\Services\FinancialTransactionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ClientController extends Controller
 {
-
-    public function __construct()
+    public function __construct(
+        private AccountContext $accountContext,
+        private FinancialTransactionService $financialTransactionService
+    )
     {
         $this->middleware('auth');
     }
+
     public function create()
     {
         return view('clients.create');
@@ -22,110 +29,128 @@ class ClientController extends Controller
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'nullable|string|max:255', // Agora opcional
-            'description' => 'nullable|string',
-            'address' => 'nullable|string',
-            'phone1' => 'nullable|string|max:15',
-            'phone2' => 'nullable|string|max:15',
-            'birth_date' => 'nullable|date',
-            'document' => 'required|string|max:20',
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255', 'unique:clients,email'],
+            'description' => ['nullable', 'string'],
+            'address' => ['nullable', 'string'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'district' => ['nullable', 'string', 'max:255'],
+            'phone1' => ['nullable', 'string', 'max:15'],
+            'phone2' => ['nullable', 'string', 'max:15'],
+            'birth_date' => ['nullable', 'date'],
+            'document' => ['required', 'string', 'max:20', 'unique:clients,document'],
         ]);
 
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-    
-        DB::beginTransaction();
-    
-        try {
-            // Verifica se o cliente já existe pelo documento
-            $client = Client::where('document', $request->document)->first();
-    
-            if (!$client) {
-                // Se o cliente não existe, cria um novo
-                $client = Client::create($request->all());
-                $message = 'Cliente cadastrado com sucesso!';
-            } else {
-                // Se o cliente já existe, atualiza os dados
-                $client->update($request->all());
-                $message = 'Cliente atualizado com sucesso!';
-            }
-    
-            // Verifica se há um usuário autenticado
-            $user = Auth::user();
-            if ($user) {
-                // Associa o cliente ao usuário atual, se ainda não estiver associado
-                if (!$user->clients()->where('client_id', $client->id)->exists()) {
-                    $user->clients()->attach($client->id);
-                    $message .= ' E associado ao seu usuário.';
-                }
-            } else {
-                \Log::warning('Tentativa de associar cliente sem usuário autenticado. Client ID: ' . $client->id);
-            }
-    
-            DB::commit();
-            return redirect()->route('home')->with('success', __($message));
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Erro ao cadastrar/atualizar cliente: ' . $e->getMessage());
-            return redirect()->back()->with('error', __('Ocorreu um erro ao processar a solicitação.'))->withInput();
-        }    
+        $user = $request->user();
+        $ownerId = $this->accountContext->ownerId($user);
+
+        DB::transaction(function () use ($validated, $user, $ownerId) {
+            $client = Client::create([
+                ...$validated,
+                'account_owner_id' => $ownerId,
+                'created_by_user_id' => $user->id,
+            ]);
+
+            User::findOrFail($ownerId)->clients()->syncWithoutDetaching([$client->id]);
+        });
+
+        return redirect()->route('home')->with('success', 'Cliente cadastrado na carteira do titular.');
     }
 
-    public function edit($id)
+    public function edit(Request $request, int $id)
     {
-        $client = Client::findOrFail($id);
+        $client = $this->accountContext->clientsFor($request->user())
+            ->with('accountTransfers')->findOrFail($id);
+
         return view('clients.edit', compact('client'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
-        // Validação dos dados
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'nullable|string|max:255,',
-            'description' => 'nullable|string',
-            'address' => 'nullable|string',
-            'phone1' => 'nullable|string|max:15',
-            'phone2' => 'nullable|string|max:15',
-            'birth_date' => 'nullable|date',
-            'status' => 'nullable|integer|in:1,2',
-            'document' => 'required|string|max:20|unique:clients,document,'.$id,
+        $client = $this->accountContext->clientsFor($request->user())->findOrFail($id);
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('clients', 'email')->ignore($client->id)],
+            'description' => ['nullable', 'string'],
+            'address' => ['nullable', 'string'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'district' => ['nullable', 'string', 'max:255'],
+            'phone1' => ['nullable', 'string', 'max:15'],
+            'phone2' => ['nullable', 'string', 'max:15'],
+            'birth_date' => ['nullable', 'date'],
+            'status' => ['nullable', 'integer', 'in:1,2'],
+            'document' => ['required', 'string', 'max:20', Rule::unique('clients', 'document')->ignore($client->id)],
         ]);
 
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
+        $client->update($validated);
 
-        $client = Client::findOrFail($id);
-        $client->update($request->all());
-
-        return redirect()->route('home')->with('success', 'Cliente atualizado com sucesso!');
+        return redirect()->route('home')->with('success', 'Cliente atualizado.');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, int $id)
     {
-        $client = Client::with(['charges', 'users'])->findOrFail($id);
+        $client = $this->accountContext->clientsFor($request->user())->with('charges')->findOrFail($id);
 
-        if ($client->charges->count() > 0) {
+        if ($client->charges->isNotEmpty()) {
             return redirect()->route('home')
-                ->with('error', __('Cliente não pode ser excluído pois possui cobranças vinculadas.'));
+                ->with('error', 'Cliente não pode ser excluído pois possui cobranças vinculadas.');
         }
 
-        DB::beginTransaction();
-
-        try {
-            // Remove todas as associações com usuários
+        DB::transaction(function () use ($client) {
             $client->users()->detach();
+            $client->delete();
+        });
 
-            DB::commit();
-            return redirect()->route('home')->with('success', __('Cliente excluído com sucesso!'));
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Erro ao excluir cliente: ' . $e->getMessage());
-            return redirect()->route('home')->with('error', __('Ocorreu um erro ao tentar excluir o cliente.'));
+        return redirect()->route('home')->with('success', 'Cliente excluído.');
+    }
+
+    public function transfer(Request $request, int $id)
+    {
+        $client = $this->accountContext->clientsFor($request->user())->findOrFail($id);
+        $validated = $request->validate([
+            'target_account_owner_id' => [
+                'required',
+                'integer',
+                Rule::exists('users', 'id')->where(fn ($query) => $query->whereNull('account_owner_id')->where('is_active', true)),
+            ],
+        ]);
+
+        $sourceOwnerId = $this->accountContext->ownerId($request->user());
+        $targetOwnerId = (int) $validated['target_account_owner_id'];
+        if ($sourceOwnerId === $targetOwnerId) {
+            throw ValidationException::withMessages(['target_account_owner_id' => 'Escolha outra conta titular.']);
         }
+
+        DB::transaction(function () use ($request, $client, $sourceOwnerId, $targetOwnerId) {
+            $lockedClient = $this->accountContext->clientsFor($request->user())
+                ->whereKey($client->id)->lockForUpdate()->firstOrFail();
+
+            $chargeIds = $lockedClient->charges()->pluck('id');
+            $installmentIds = \App\Models\Installment::query()
+                ->whereIn('charge_id', $chargeIds)->pluck('id');
+
+            $lockedClient->forceFill(['account_owner_id' => $targetOwnerId])->save();
+            ClientAccountTransfer::create([
+                'client_id' => $lockedClient->id,
+                'from_account_owner_id' => $sourceOwnerId,
+                'to_account_owner_id' => $targetOwnerId,
+                'transferred_by_user_id' => $request->user()->id,
+            ]);
+            $sourceUserIds = User::query()->where('account_owner_id', $sourceOwnerId)->pluck('id')->push($sourceOwnerId);
+            $lockedClient->users()->detach($sourceUserIds);
+            User::findOrFail($targetOwnerId)->clients()->syncWithoutDetaching([$lockedClient->id]);
+
+            \App\Models\FinancialTransaction::query()
+                ->where('transaction_type', 'charge')->whereIn('related_id', $chargeIds)
+                ->update(['account_owner_id' => $targetOwnerId]);
+            \App\Models\FinancialTransaction::query()
+                ->where('transaction_type', 'payment')->whereIn('related_id', $installmentIds)
+                ->update(['account_owner_id' => $targetOwnerId]);
+
+            $this->financialTransactionService->recalculateBalances([$sourceOwnerId, $targetOwnerId]);
+        });
+
+        return redirect()->route('home')->with('success', 'Cliente e movimentos vinculados transferidos para a conta selecionada.');
     }
 }

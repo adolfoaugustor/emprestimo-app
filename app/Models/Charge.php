@@ -17,6 +17,7 @@ class Charge extends Model
         'amount_paid',
         'installments_count',
         'installments_paid',
+        'created_by_user_id',
     ];
 
     public function client()
@@ -27,5 +28,10 @@ class Charge extends Model
     public function installments()
     {
         return $this->hasMany(Installment::class);
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
     }
 }

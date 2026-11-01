@@ -10,6 +10,7 @@
 <body>
     <div class="app-shell">
         @auth
+            @php($accountContext = app(\App\Services\AccountContext::class))
             <aside class="app-sidebar" id="appSidebar">
                 <a class="app-brand" href="{{ route('home') }}">
                     <span class="app-brand-mark">E</span>
@@ -19,9 +20,14 @@
                 <div class="sidebar-section-label">Menu principal</div>
                 <nav class="sidebar-nav" aria-label="Navegação principal">
                     <a class="sidebar-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}"><span class="sidebar-icon">⌂</span>Visão geral</a>
-                    <a class="sidebar-link {{ request()->routeIs('clients.*') ? 'active' : '' }}" href="{{ route('clients.create') }}"><span class="sidebar-icon">♙</span>Novo cliente</a>
+                    @if($accountContext->canPerform(Auth::user(), 'create_clients'))
+                        <a class="sidebar-link {{ request()->routeIs('clients.*') ? 'active' : '' }}" href="{{ route('clients.create') }}"><span class="sidebar-icon">♙</span>Novo cliente</a>
+                    @endif
                     <a class="sidebar-link {{ request()->routeIs('charges.*', 'installments.*') ? 'active' : '' }}" href="{{ route('home') }}"><span class="sidebar-icon">▤</span>Empréstimos e parcelas</a>
-                    <a class="sidebar-link {{ request()->routeIs('financial.report') ? 'active' : '' }}" href="{{ route('financial.report') }}"><span class="sidebar-icon">▥</span>Relatório financeiro</a>
+                    @if($accountContext->isOwner(Auth::user()))
+                        <a class="sidebar-link {{ request()->routeIs('financial.report') ? 'active' : '' }}" href="{{ route('financial.report') }}"><span class="sidebar-icon">▥</span>Relatório financeiro</a>
+                        <a class="sidebar-link {{ request()->routeIs('subusers.*') ? 'active' : '' }}" href="{{ route('subusers.index') }}"><span class="sidebar-icon">♧</span>Subusuários</a>
+                    @endif
                 </nav>
 
                 <div class="sidebar-bottom">Área de gestão<br><span>Carteira pessoal</span></div>

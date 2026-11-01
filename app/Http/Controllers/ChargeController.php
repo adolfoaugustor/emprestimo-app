@@ -5,156 +5,147 @@ namespace App\Http\Controllers;
 use App\Models\Charge;
 use App\Models\Client;
 use App\Models\Installment;
+use App\Services\AccountContext;
 use App\Services\ChargeService;
 use App\Services\FinancialTransactionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ChargeController extends Controller
 {
-    protected $financialTransactionService;
-    protected $chargeService;
-
-    public function __construct(FinancialTransactionService $financialTransactionService, ChargeService $chargeService)
-    {
-        $this->financialTransactionService = $financialTransactionService;
-        $this->chargeService = $chargeService;
+    public function __construct(
+        private FinancialTransactionService $financialTransactionService,
+        private ChargeService $chargeService,
+        private AccountContext $accountContext
+    ) {
     }
 
-    public function create($client_id)
+    public function create(Request $request, int $client_id)
     {
-        $client = Client::findOrFail($client_id);
+        $client = $this->accountContext->clientsFor($request->user())->findOrFail($client_id);
 
-        if ($this->hasActiveCharge($client_id)) {
+        if ($this->hasActiveCharge($client->id)) {
             return redirect()->route('home')->with('error', 'Este cliente já possui uma cobrança ativa.');
         }
+
         $zeroPayments = $this->chargeService->getZeroPaymentsFromLastCharge($client->id);
-        
+
         return view('charges.create', compact('client', 'zeroPayments'));
     }
 
-    public function show($client_id)
+    public function show(Request $request, int $client_id)
     {
-        
-        $client = Client::with([
-            'charges' => function ($query) {
-                $query->orderBy('created_at', 'desc'); // Ordena as cobranças pela data de criação, mais recente primeiro
-            },
-            'charges.installments' => function ($query) {
-                $query->orderBy('due_date', 'asc');
-            }
-        ])->findOrFail($client_id);
-        
-        // add redirect to home with message client not charge
+        $client = $this->accountContext->clientsFor($request->user())
+            ->with(['charges' => fn ($query) => $query->orderByDesc('created_at'), 'charges.installments' => fn ($query) => $query->orderBy('due_date')])
+            ->findOrFail($client_id);
+
         if ($client->charges->isEmpty()) {
             return redirect()->route('home')->with('error', 'Cliente não possui cobranças.');
         }
-            
-        // Tenta obter a cobrança ativa (sem data de término)
-        $charge = $client->charges->firstWhere('end_date', null);
 
-        // Se não houver cobrança ativa, pega a última criada
-        if (!$charge) {
-            $charge = $client->charges->first();
-            if (!$charge) {
-                return redirect()->route('home')->with('error', 'Nenhuma cobrança encontrada para este cliente.');
-            }
-        }
-
-        // Carrega as parcelas da cobrança selecionada, se existir
-        if ($charge) {
-            $charge->load(['installments' => function ($query) {
-                $query->orderBy('due_date', 'asc');
-            }]);
-        }
+        $charge = $client->charges->firstWhere('end_date', null) ?? $client->charges->first();
+        $charge->load([
+            'installments' => fn ($query) => $query->orderBy('due_date'),
+            'installments.dueDateChanges.changedBy',
+        ]);
 
         return view('charges.show', compact('client', 'charge'));
     }
-    
-    public function store(Request $request, $client_id)
+
+    public function store(Request $request, int $client_id)
     {
-        $includedPaymentsIds = $request->input('include_payments', []);
-        $additionalAmount = $request->input('total_amount', 0);
-
         $validated = $request->validate([
-            'start_date' => 'required|date',
-            'total_amount' => 'required|numeric|min:0',
-            'installments_count' => 'required|integer|min:1',
+            'start_date' => ['required', 'date'],
+            'total_amount' => ['required', 'numeric', 'min:0'],
+            'installments_count' => ['required', 'integer', 'min:1', 'max:120'],
+            'include_payments' => ['nullable', 'array'],
+            'include_payments.*' => ['integer', 'distinct'],
         ]);
 
-        $includedPaymentsTotal = Installment::whereIn('id', $includedPaymentsIds)->sum('amount');
-        $newTotalAmount = $includedPaymentsTotal + $additionalAmount;
+        $user = $request->user();
+        $ownerId = $this->accountContext->ownerId($user);
+        $includedIds = $validated['include_payments'] ?? [];
 
-        $charge = Charge::create([
-            'client_id' => $client_id,
-            'start_date' => $validated['start_date'],
-            'total_amount' => $newTotalAmount,
-            'installments_count' => $validated['installments_count'],
-        ]);
+        $charge = DB::transaction(function () use ($user, $ownerId, $client_id, $validated, $includedIds) {
+            $client = $this->accountContext->clientsFor($user)->whereKey($client_id)->lockForUpdate()->firstOrFail();
 
-        // Registrar a transação financeira
-        $this->financialTransactionService->recordTransaction(
-            'charge',
-            $charge->total_amount,
-            'Cobrança #' . $charge->id,
-            $charge->id
-        );
+            if ($this->hasActiveCharge($client->id)) {
+                throw ValidationException::withMessages(['total_amount' => 'Este cliente já possui uma cobrança ativa.']);
+            }
 
-        $this->generateInstallments($charge);
+            $eligibleInstallments = collect();
+            if ($includedIds !== []) {
+                $eligibleInstallments = Installment::query()
+                    ->whereIn('id', $includedIds)
+                    ->whereNotNull('payment_date')
+                    ->where('amount_paid', 0)
+                    ->whereHas('charge', fn ($query) => $query->where('client_id', $client->id))
+                    ->lockForUpdate()
+                    ->get();
 
-        return redirect()
-                ->route('charges.show', ['client_id' => $client_id])
-                ->with('success', 'Cobrança criada com sucesso!');
+                if ($eligibleInstallments->count() !== count($includedIds)) {
+                    throw ValidationException::withMessages(['include_payments' => 'Uma ou mais parcelas selecionadas não pertencem a este cliente.']);
+                }
+            }
+
+            $totalAmount = round((float) $eligibleInstallments->sum('amount') + (float) $validated['total_amount'], 2);
+            $charge = Charge::create([
+                'client_id' => $client->id,
+                'created_by_user_id' => $user->id,
+                'start_date' => $validated['start_date'],
+                'total_amount' => $totalAmount,
+                'installments_count' => $validated['installments_count'],
+            ]);
+
+            $this->financialTransactionService->recordTransaction(
+                $ownerId,
+                $user->id,
+                'charge',
+                $charge->total_amount,
+                'Cobrança #' . $charge->id,
+                $charge->id
+            );
+
+            $this->generateInstallments($charge);
+
+            return $charge;
+        });
+
+        return redirect()->route('charges.show', ['client_id' => $charge->client_id])
+            ->with('success', 'Empréstimo criado com sucesso!');
     }
 
-    private function generateInstallments(Charge $charge)
+    private function generateInstallments(Charge $charge): void
     {
-        // Calcular o valor total com 20% de incremento
-        $originalAmount = $charge['total_amount'];
-        $incrementedAmount = $originalAmount * 1.20; // Incrementa 20%
-
+        $incrementedAmount = (float) $charge->total_amount * 1.20;
         $installmentAmount = $incrementedAmount / $charge->installments_count;
         $startDate = Carbon::parse($charge->start_date)->addDay();
-    
-        // Ajustar a data inicial para o próximo dia útil, se necessário
-        switch ($startDate->dayOfWeek) {
-            case Carbon::SATURDAY:
-                $startDate->addDays(2); // Pular para segunda-feira
-                break;
-            case Carbon::SUNDAY:
-                $startDate->addDay(); // Pular para segunda-feira
-                break;
-            case Carbon::FRIDAY:
-                $startDate->addDays(3); // Pular para segunda-feira
-                break;
-            // Nenhum ajuste necessário para outros dias da semana
+
+        if ($startDate->isFriday()) {
+            $startDate->addDays(3);
+        } elseif ($startDate->isSaturday()) {
+            $startDate->addDays(2);
+        } elseif ($startDate->isSunday()) {
+            $startDate->addDay();
         }
-    
-        for ($i = 0; $i < $charge->installments_count; $i++) {
-            // Criar a parcela com a data de vencimento calculada
+
+        for ($index = 0; $index < $charge->installments_count; $index++) {
             Installment::create([
                 'charge_id' => $charge->id,
                 'amount' => $installmentAmount,
                 'due_date' => $startDate->copy(),
             ]);
-    
-            // Incrementar a data por 1 dia, pulando fins de semana
+
             do {
                 $startDate->addDay();
             } while ($startDate->isWeekend());
         }
     }
 
-    public function hasActiveCharge(int $userId): bool
+    private function hasActiveCharge(int $clientId): bool
     {
-        // check has charge active by id_user and end_date is null
-        $charge = Charge::where('client_id', $userId)
-                    ->where('end_date', null)
-                    ->first();
-        if ($charge) {
-            return true;
-        } else {
-            return false;
-        }
+        return Charge::query()->where('client_id', $clientId)->whereNull('end_date')->exists();
     }
 }

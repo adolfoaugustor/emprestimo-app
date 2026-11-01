@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+    @php($accountContext = app(\App\Services\AccountContext::class))
+    @php($canRecordPayments = $accountContext->canPerform(Auth::user(), 'record_payments'))
+    @php($canChangeDueDates = $accountContext->canPerform(Auth::user(), 'change_due_dates'))
     <div class="container">
         <div class="page-heading"><div><div class="page-eyebrow">Empréstimos · {{ $client->name }}</div><h1>{{ __('Detalhes da cobrança') }}</h1><p>{{ __('Cobrança #') . $charge->id }}</p></div><a class="btn btn-outline-secondary" href="{{ route('home') }}">Voltar ao painel</a></div>
 
@@ -48,16 +51,17 @@
                             <td>R$ {{ number_format($installment->discount, 2, ',', '.') }}</td>
                             <td>R$ {{ number_format($installment->penalty, 2, ',', '.') }}</td>
                             <td>
-                                @if(!$installment->payment_date)
+                                @if(!$installment->payment_date && $canRecordPayments)
                                     <a href="{{ route('installments.showPaymentForm', $installment->id) }}" class="btn btn-success">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
                                             <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
                                             <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05"/>
                                         </svg>
                                     </a>
-                                @else
+                                @elseif($installment->payment_date)
                                     <span class="badge bg-primary">{{ __('Tá Pago') }}</span>
                                 @endif
+                                @if($canChangeDueDates && !$installment->payment_date)
                                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editDueDateModal{{ $installment->id }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar2-check" viewBox="0 0 16 16">
                                         <path d="M10.854 8.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708L7.5 10.793l2.646-2.647a.5.5 0 0 1 .708 0"/>
@@ -65,6 +69,10 @@
                                         <path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5z"/>
                                     </svg>
                                 </button>
+                                @endif
+                                @if($installment->dueDateChanges->isNotEmpty())
+                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#dueDateHistoryModal{{ $installment->id }}" title="Histórico de vencimento">Histórico</button>
+                                @endif
                             </td>
                         </tr>
                     @endforeach
@@ -74,6 +82,7 @@
     </div>
 
     <!-- Modals de Edição -->
+    @if($canChangeDueDates)
     @foreach($charge->installments as $installment)
     <div class="modal fade" id="editDueDateModal{{ $installment->id }}" tabindex="-1" aria-labelledby="editDueDateModalLabel{{ $installment->id }}" aria-hidden="true">
         <div class="modal-dialog">
@@ -99,5 +108,27 @@
             </div>
         </div>
     </div>
+    @endforeach
+    @endif
+    @foreach($charge->installments as $installment)
+        @if($installment->dueDateChanges->isNotEmpty())
+        <div class="modal fade" id="dueDateHistoryModal{{ $installment->id }}" tabindex="-1" aria-labelledby="dueDateHistoryModalLabel{{ $installment->id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="dueDateHistoryModalLabel{{ $installment->id }}">Histórico da parcela #{{ $installment->id }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="list-unstyled mb-0">
+                            @foreach($installment->dueDateChanges as $change)
+                                <li class="py-2 border-bottom">{{ Carbon\Carbon::parse($change->old_due_date)->format('d/m/Y') }} → {{ Carbon\Carbon::parse($change->new_due_date)->format('d/m/Y') }}<br><small class="text-muted">{{ $change->changedBy?->name ?? 'Usuário removido' }} · {{ $change->created_at->format('d/m/Y H:i') }}</small></li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
     @endforeach
 @endsection

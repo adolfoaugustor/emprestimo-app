@@ -24,6 +24,11 @@ class Installment extends Model
         return $this->belongsTo(Charge::class);
     }
 
+    public function dueDateChanges()
+    {
+        return $this->hasMany(InstallmentDueDateChange::class)->orderByDesc('created_at');
+    }
+
     public function setAmountAttribute($value)
     {
         $this->attributes['amount'] = $this->formatDecimal($value);
