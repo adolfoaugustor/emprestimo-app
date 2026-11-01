@@ -3,91 +3,66 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <title>{{ config('app.name', 'Laravel') }}</title>
-
-    <!-- Fonts -->
-    <link rel="dns-prefetch" href="//fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-    <!-- Scripts -->
-    <style>
-        .nav-link.active {
-            font-weight: bold;  /* Deixa o texto em negrito */
-            border-bottom: 2px solid #fff; /* Adiciona um sublinhado */
-        }
-    </style>
+    <title>{{ config('app.name', 'Empréstimo App') }}</title>
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
 <body>
-    <div id="app">
-        <nav class="navbar navbar-expand-md navbar-light bg-success shadow-sm">
-            <div class="container">
-                <a class="navbar-brand fw-bolder text-white" href="{{ Auth::check() ? url('/home') :url('/') }}">
-                    {{ config('app.name', 'Laravel') }}
+    <div class="app-shell">
+        @auth
+            <aside class="app-sidebar" id="appSidebar">
+                <a class="app-brand" href="{{ route('home') }}">
+                    <span class="app-brand-mark">E</span>
+                    <span><strong>Empréstimo</strong><small>Gestão financeira</small></span>
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
 
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <!-- Left Side Of Navbar -->
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link text-light {{ request()->routeIs('clients.create') ? 'active': '' }}"
-                            href="{{ route('clients.create') }}">{{ __('Add Cliente') }}</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light {{ request()->routeIs('financial.report') ? 'active': '' }}" href="{{ route('financial.report') }}">Relatórios</a>
-                        </li>
-                    </ul>
+                <div class="sidebar-section-label">Menu principal</div>
+                <nav class="sidebar-nav" aria-label="Navegação principal">
+                    <a class="sidebar-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}"><span class="sidebar-icon">⌂</span>Visão geral</a>
+                    <a class="sidebar-link {{ request()->routeIs('clients.*') ? 'active' : '' }}" href="{{ route('clients.create') }}"><span class="sidebar-icon">♙</span>Novo cliente</a>
+                    <a class="sidebar-link {{ request()->routeIs('charges.*', 'installments.*') ? 'active' : '' }}" href="{{ route('home') }}"><span class="sidebar-icon">▤</span>Empréstimos e parcelas</a>
+                    <a class="sidebar-link {{ request()->routeIs('financial.report') ? 'active' : '' }}" href="{{ route('financial.report') }}"><span class="sidebar-icon">▥</span>Relatório financeiro</a>
+                </nav>
 
-                    <!-- Right Side Of Navbar -->
-                    <ul class="navbar-nav ms-auto text-white">
-                        <!-- Authentication Links -->
-                        @guest
-                            @if (Route::has('login'))
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>
-                                </li>
-                            @endif
+                <div class="sidebar-bottom">Área de gestão<br><span>Carteira pessoal</span></div>
+            </aside>
+        @endauth
 
-                            @if (Route::has('register'))
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
-                                </li>
-                            @endif
-                        @else
-                            <li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                    {{ Auth::user()->name }}
-                                </a>
+        <div class="app-main">
+            <header class="app-topbar">
+                @auth
+                    <button class="sidebar-toggle" id="appSidebarToggle" type="button" aria-label="Abrir menu" aria-controls="appSidebar" aria-expanded="false">☰</button>
+                @else
+                    <a class="guest-brand" href="{{ url('/') }}"><span class="app-brand-mark">E</span>Empréstimo</a>
+                @endauth
 
-                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                    <button class="dropdown-item" type="submit" form="logout-form">{{ __('Sair') }}</button>
+                <div class="topbar-spacer"></div>
+                @auth
+                    <div class="dropdown">
+                        <button class="user-dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="user-avatar">{{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}</span>
+                            <span class="user-name">{{ Auth::user()->name }}</span>
+                            <span class="dropdown-caret" aria-hidden="true">⌄</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end user-dropdown-menu">
+                            <span class="dropdown-heading">Conta conectada</span>
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button class="dropdown-item" type="submit">Sair da conta</button>
+                            </form>
+                        </div>
+                    </div>
+                @else
+                    @if (Route::has('login'))
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('login') }}">Entrar</a>
+                    @endif
+                @endauth
+            </header>
 
-                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                        @csrf
-                                    </form>
-                                </div>
-                            </li>
-                        @endguest
-                    </ul>
-                </div>
-            </div>
-        </nav>
-
-        <main class="py-4">
-            @yield('content')
-        </main>
+            <main class="page-content">
+                @yield('content')
+            </main>
+        </div>
     </div>
-    {{-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script> --}}
 </body>
 </html>

@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container">
-    <h2 class="mb-4 text-center">{{ __('Pagamento da parcela #') . $installment->id }}</h2>
+    <div class="page-heading"><div><div class="page-eyebrow">Pagamento · {{ $installment->charge->client->name }}</div><h1>{{ __('Registrar pagamento') }}</h1><p>{{ __('Parcela #') . $installment->id }} · Vencimento {{ Carbon\Carbon::parse($installment->due_date)->format('d/m/Y') }}</p></div></div>
 
     <div class="col-md-12">
         @if (session('status'))
@@ -19,11 +19,11 @@
         @endif
     </div>
 
-    <form action="{{ route('installments.pay', $installment->id) }}" method="POST">
+    <form action="{{ route('installments.pay', $installment->id) }}" method="POST" class="form-panel form-panel-body">
         @csrf
         <div class="mb-3 row">
             <div class="col-4">
-                <label for="amount" class="form-label">{{ __('Quantia') }}</label>
+                <label for="amount" class="form-label">{{ __('Valor recebido') }} <span class="required-mark">*</span></label>
                 <input type="number" step="0.01" class="form-control" id="amount" name="amount" value="{{ old('amount', $installment->amount) }}" required>
             </div>
             <div class="col-4">

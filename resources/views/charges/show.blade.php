@@ -2,23 +2,23 @@
 
 @section('content')
     <div class="container">
-        <h2 class="mb-4 text-center">{{ __('Detalhes da cobrança para ') . $client->name }}</h2>
+        <div class="page-heading"><div><div class="page-eyebrow">Empréstimos · {{ $client->name }}</div><h1>{{ __('Detalhes da cobrança') }}</h1><p>{{ __('Cobrança #') . $charge->id }}</p></div><a class="btn btn-outline-secondary" href="{{ route('home') }}">Voltar ao painel</a></div>
 
-        <div class="mb-3">
-            <h4>{{ __('Informações de cobrança') }}</h4>
-            <ul>
-                <strong>{{ __('Valor Total:') }}</strong> R$ {{ number_format($charge->total_amount, 2) }} <small>({{ __('Valor Emprestado!') }})</small><br>
-                <strong>{{ __('Valor Pago:') }}</strong> R$ {{ number_format($charge->amount_paid, 2) }} <small>({{ __('valor total está adicionado 20%') }})</small><br>
-                <strong>{{ __('Data da Cobrança:') }}</strong> {{ Carbon\Carbon::parse($charge->start_date)->format('d/m/Y') }}<br>
-                <strong>{{ __('Data Final:') }}</strong> {{ $charge->end_date ? Carbon\Carbon::parse($charge->start_date)->format('d/m/Y') : __('N/A') }}<br>
-                <strong>{{ __('Parcelas Pagas:') }}</strong> {{ $charge->installments_paid }} / {{ $charge->installments_count }}<br>
-                <strong>{{ __('Status:') }}</strong> {{ $charge->installments_paid == $charge->installments_count ? __('Finalizado') : __('Pendente') }}<br>
-            </ul>
+        <div class="card mb-4">
+            <div class="card-header">{{ __('Resumo do empréstimo') }}</div>
+            <div class="card-body row g-3">
+                <div class="col-6 col-lg-3"><div class="summary-label">Valor total</div><div class="summary-value">R$ {{ number_format($charge->total_amount, 2, ',', '.') }}</div></div>
+                <div class="col-6 col-lg-3"><div class="summary-label">Valor recebido</div><div class="summary-value">R$ {{ number_format($charge->amount_paid, 2, ',', '.') }}</div></div>
+                <div class="col-6 col-lg-3"><div class="summary-label">Parcelas pagas</div><div class="summary-value">{{ $charge->installments_paid }} / {{ $charge->installments_count }}</div></div>
+                <div class="col-6 col-lg-3"><div class="summary-label">Situação</div><div class="summary-value fs-6">{{ $charge->installments_paid == $charge->installments_count ? __('Finalizado') : __('Em andamento') }}</div></div>
+                <div class="col-6"><div class="summary-label">Data da cobrança</div><div>{{ Carbon\Carbon::parse($charge->start_date)->format('d/m/Y') }}</div></div>
+                <div class="col-6"><div class="summary-label">Data final</div><div>{{ $charge->end_date ? Carbon\Carbon::parse($charge->end_date)->format('d/m/Y') : __('Em andamento') }}</div></div>
+            </div>
         </div>
 
         <div class="mb-4">
             <h4>{{ __('Parcelas') }}</h4>
-            <table class="table table-hover">
+            <div class="table-responsive"><table class="table table-hover">
                 <thead>
                     <tr>
                         <th>{{ __('Nº') }}</th>
@@ -36,17 +36,17 @@
                     @foreach($charge->installments as $installment)
                         <tr>
                             <td>{{ $i++ }}</td>
-                            <td>R$ {{ number_format($installment->amount, 2) }}</td>
+                            <td>R$ {{ number_format($installment->amount, 2, ',', '.') }}</td>
                             <td class="{{ $installment->payment_date && $installment->amount_paid == 0.00 ? 'text-danger' : '' }}">
-                                R$ {{ number_format($installment->amount_paid, 2) }}
+                                R$ {{ number_format($installment->amount_paid, 2, ',', '.') }}
                             </td>                            
                             <td>{{ Carbon\Carbon::parse($installment->due_date)->format('d/m/Y') }}</td>
                             <td>{{ $installment->payment_date ? 
                                 Carbon\Carbon::parse($installment->payment_date)->format('d/m/Y') :
                                 __('Not Paid') }}
                             </td>
-                            <td>R$ {{ number_format($installment->discount, 2) }}</td>
-                            <td>R$ {{ number_format($installment->penalty, 2) }}</td>
+                            <td>R$ {{ number_format($installment->discount, 2, ',', '.') }}</td>
+                            <td>R$ {{ number_format($installment->penalty, 2, ',', '.') }}</td>
                             <td>
                                 @if(!$installment->payment_date)
                                     <a href="{{ route('installments.showPaymentForm', $installment->id) }}" class="btn btn-success">
@@ -69,7 +69,7 @@
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
         </div>
     </div>
 

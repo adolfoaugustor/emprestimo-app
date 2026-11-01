@@ -2,9 +2,9 @@
 
 @section('content')
     <div class="container">
-        <h1>Relatório Financeiro</h1>
+        <div class="page-heading"><div><div class="page-eyebrow">Financeiro</div><h1>Relatório financeiro</h1><p>Movimentações da conta no período selecionado.</p></div></div>
 
-        <form action="{{ route('financial.report') }}" method="GET" class="mb-4">
+        <form action="{{ route('financial.report') }}" method="GET" class="mb-4 filter-row">
             <div class="row">
                 <div class="col-md-4">
                     <input type="date" name="start_date" class="form-control" value="{{ $startDate->format('Y-m-d') }}">

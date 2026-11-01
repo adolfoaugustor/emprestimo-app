@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container">
-    <h2 class="mb-4 text-center">{{ __('Criar cobrança para ') . $client->name }}</h2>
+    <div class="page-heading"><div><div class="page-eyebrow">Empréstimos · novo</div><h1>{{ __('Criar cobrança para ') . $client->name }}</h1><p>Informe o valor e a data de início.</p></div></div>
 
     <div class="col-md-12">
         @if (session('status'))
@@ -19,7 +19,7 @@
         @endif
     </div>
 
-    <form action="{{ route('charges.store', ['client_id' => $client->id]) }}" method="POST">
+    <form action="{{ route('charges.store', ['client_id' => $client->id]) }}" method="POST" class="form-panel form-panel-body">
         @csrf
 
         @if (count($zeroPayments) >= 1)

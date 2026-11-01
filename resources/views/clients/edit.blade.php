@@ -26,11 +26,11 @@
                 @method('PUT')
                 <div class="mb-3 row">
                     <div class="col-6">
-                        <label for="name" class="form-label">{{ __('Nome do Cliente')}}</label>
+                        <label for="name" class="form-label">{{ __('Nome do Cliente')}} <span class="required-mark">*</span></label>
                         <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $client->name) }}" required />
                     </div>
                     <div class="col-6">
-                        <label for="document" class="form-label">{{ __('Documento: CPF')}}</label>
+                        <label for="document" class="form-label">{{ __('Documento: CPF')}} <span class="required-mark">*</span></label>
                         <input type="text" class="form-control" id="document" name="document" value="{{ old('document', $client->document) }}" required>
                     </div>
                 </div>
