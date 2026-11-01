@@ -11,7 +11,7 @@
     <div class="app-shell">
         @auth
             @php($accountContext = app(\App\Services\AccountContext::class))
-            <aside class="app-sidebar" id="appSidebar">
+            <aside class="app-sidebar" id="appSidebar" aria-label="Menu lateral">
                 <a class="app-brand" href="{{ route('home') }}">
                     <span class="app-brand-mark">E</span>
                     <span><strong>Empréstimo</strong><small>Gestão financeira</small></span>
@@ -32,12 +32,13 @@
 
                 <div class="sidebar-bottom">Área de gestão<br><span>Carteira pessoal</span></div>
             </aside>
+            <button class="sidebar-backdrop" id="appSidebarBackdrop" type="button" aria-label="Fechar menu" tabindex="-1" hidden></button>
         @endauth
 
         <div class="app-main">
             <header class="app-topbar">
                 @auth
-                    <button class="sidebar-toggle" id="appSidebarToggle" type="button" aria-label="Abrir menu" aria-controls="appSidebar" aria-expanded="false">☰</button>
+                    <button class="sidebar-toggle" id="appSidebarToggle" type="button" aria-label="Abrir menu" aria-controls="appSidebar" aria-expanded="false"><span aria-hidden="true">☰</span></button>
                 @else
                     <a class="guest-brand" href="{{ url('/') }}"><span class="app-brand-mark">E</span>Empréstimo</a>
                 @endauth
