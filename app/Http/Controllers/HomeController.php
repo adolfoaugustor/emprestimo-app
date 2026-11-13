@@ -59,6 +59,9 @@ class HomeController extends Controller
         $charger = $isAccountOwner ? Charge::whereIn('client_id', $clientIds)->sum('total_amount') : null;
 
         $totalClients = $clients->count();
+        $activeClientsCount = $clients->filter(fn ($c) => $c->hasActiveCharge() || $c->isNewClient())->count();
+        $settledClientsCount = $clients->filter(fn ($c) => $c->isSettled())->count();
+
         $pendingInstallments = Installment::with('charge.client')
             ->whereHas('charge', function ($query) use ($clientIds) {
                 $query->whereIn('client_id', $clientIds);
@@ -73,7 +76,7 @@ class HomeController extends Controller
         $canRecordPayments = $this->accountContext->canPerform($user, 'record_payments');
 
         return view('home', compact(
-            'clients', 'totalClients', 'totalPaid', 'totalReceivable', 'charger', 'pendingInstallments',
+            'clients', 'totalClients', 'activeClientsCount', 'settledClientsCount', 'totalPaid', 'totalReceivable', 'charger', 'pendingInstallments',
             'isAccountOwner', 'canCreateClients', 'canCreateCharges', 'canRecordPayments', 'transferOwners'
         ));
     }

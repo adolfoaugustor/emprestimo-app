@@ -94,7 +94,7 @@ class ClientController extends Controller
 
         if ($client->charges->isNotEmpty()) {
             return redirect()->route('home')
-                ->with('error', 'Cliente não pode ser excluído pois possui cobranças vinculadas.');
+                ->with('error', 'Cliente não pode ser excluído fisicamente pois possui histórico de cobranças vinculado. Clientes com cobranças quitadas ficam automaticamente ocultos da listagem ativa para preservar o histórico contábil.');
         }
 
         DB::transaction(function () use ($client) {
@@ -102,7 +102,7 @@ class ClientController extends Controller
             $client->delete();
         });
 
-        return redirect()->route('home')->with('success', 'Cliente excluído.');
+        return redirect()->route('home')->with('success', 'Cliente excluído com sucesso.');
     }
 
     public function transfer(Request $request, int $id)

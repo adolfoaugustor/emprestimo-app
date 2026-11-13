@@ -57,4 +57,40 @@ class Client extends Model
     {
         return $this->hasMany(ClientAccountTransfer::class)->with(['fromAccountOwner', 'toAccountOwner', 'transferredBy'])->orderByDesc('created_at');
     }
+
+    /**
+     * Verifica se o cliente possui algum empréstimo ativo (cobrança sem end_date).
+     */
+    public function hasActiveCharge(): bool
+    {
+        if ($this->relationLoaded('charges')) {
+            return $this->charges->contains(fn ($charge) => is_null($charge->end_date));
+        }
+
+        return $this->charges()->whereNull('end_date')->exists();
+    }
+
+    /**
+     * Verifica se o cliente já finalizou/quitou todos os seus empréstimos.
+     */
+    public function isSettled(): bool
+    {
+        if ($this->relationLoaded('charges')) {
+            return $this->charges->isNotEmpty() && !$this->hasActiveCharge();
+        }
+
+        return $this->charges()->exists() && !$this->hasActiveCharge();
+    }
+
+    /**
+     * Verifica se o cliente é novo (nunca teve empréstimo).
+     */
+    public function isNewClient(): bool
+    {
+        if ($this->relationLoaded('charges')) {
+            return $this->charges->isEmpty();
+        }
+
+        return !$this->charges()->exists();
+    }
 }
